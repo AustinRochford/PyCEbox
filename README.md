@@ -13,3 +13,7 @@ For easy development and prototyping using IPython notebooks, there is a Vagrant
 4. Run an IPython notebook server with `PYTHONPATH=${PYTHONPATH}:/vagrant ipython notebook --no-browser --ip='*'`.
 
 You should now be able to access the notebook server at `localhost:8000/tree`.
+
+## License
+
+This library is distributed under the [MIT License](https://raw.githubusercontent.com/AustinRochford/PyCEbox/master/LICENSE).
