@@ -1,6 +1,8 @@
 # PyCEbox
 Python Individual Conditional Expectation Plot Toolbox
 
+A Python implementation of individual conditional expecation plots inspired by R's [ICEbox](https://cran.r-project.org/web/packages/ICEbox/index.html). Individual conditional expectation plots were introduced in _Peeking Inside the Black Box: Visualizing Statistical Learning with Plots of Individual Conditional Expectation_ ([arXiv:1309.6392](http://arxiv.org/abs/1309.6392)).
+
 ## Development
 
 For easy development and prototyping using IPython notebooks, there is a Vagrant envirnoment included.  To run an IPython notebook with access to your development version of `pycebox`, follow these steps.
