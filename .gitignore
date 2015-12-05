@@ -65,3 +65,6 @@ pip-selfcheck.json
 # vim
 *.swp
 *.swo
+
+# hypothesis
+.hypothesis/
