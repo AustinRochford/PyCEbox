@@ -68,3 +68,6 @@ pip-selfcheck.json
 
 # hypothesis
 .hypothesis/
+
+# vagrant
+.vagrant/
