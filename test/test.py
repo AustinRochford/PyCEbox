@@ -1,9 +1,11 @@
 from hypothesis import given
 from hypothesis import strategies as st
 
+import matplotlib as mpl
 import numpy as np
 import pandas as pd
 
+mpl.use('AGG') # make the tests pass flexible on OS X
 from pycebox import ice
 
 
@@ -74,6 +76,28 @@ def test_ice_num_grid_points():
                                    index=pd.Series([0., 0.5, 1.], name='x2'))
 
     assert (ice_df == ice_df_expected).all().all()
+
+
+# generate a list of length m  and a list of length m of lists of length n of
+# floats, to turn into a 2d numpy array
+@given(st.tuples(st.integers(min_value=2, max_value=10),
+                 st.integers(min_value=2, max_value=10)).flatmap(lambda (m, n): st.tuples(st.lists(st.floats(),
+                                                                                                   min_size=m,
+                                                                                                   max_size=m),
+                                                                                          st.lists(st.lists(st.floats(),
+                                                                                                   min_size=n,
+                                                                                                   max_size=n),
+                                                                                          min_size=m, max_size=m))))
+def test_pdp(args):
+    index, l = args
+    index.sort()
+    ice_df = pd.DataFrame(l, index=index)
+
+    pdp = ice.pdp(ice_df)
+    pdp_expected = pd.Series([pd.Series(row).mean() for row in l], index=index)
+
+    assert compare_with_NaN(pdp, pdp_expected).all()
+
 
 
 def test_to_ice_data():
