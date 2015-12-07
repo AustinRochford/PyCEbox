@@ -40,9 +40,9 @@ def ice(data, column, predict, num_grid_points=None):
     return ice_df
 
 
-def ice_plot(ice_data, frac_to_plot=1., x_quantile=False,
+def ice_plot(ice_data, frac_to_plot=1., x_quantile=False, plot_pdp=False,
              centered=False, centered_quantile=0.,
-             ax=None, **kwargs):
+             ax=None, pdp_kwargs=None, **kwargs):
     """
     Plot the given ICE data
 
@@ -51,6 +51,9 @@ def ice_plot(ice_data, frac_to_plot=1., x_quantile=False,
 
     If `x_quantile` is `True`, the plotted x-coordinates are quantiles of
     `ice_data.index`.
+
+    If `plot_pdp` is `True`, plot the partial dependence estimate.  When this
+    is `True`, passes `pdp_kwargs` to plot(...).
 
     If `centered` is true, each ICE curve is is centered to zero at the
     percentile (closest to) `centered_quantile`.
@@ -70,6 +73,9 @@ def ice_plot(ice_data, frac_to_plot=1., x_quantile=False,
         centered_quantile_iloc = np.abs(quantiles - centered_quantile).argmin()
         ice_data = ice_data - ice_data.iloc[centered_quantile_iloc]
 
+    if plot_pdp:
+        pdp_data = pdp(ice_data)
+
     if frac_to_plot < 1.:
         n_cols = ice_data.shape[1]
         icols = np.random.choice(n_cols, size=frac_to_plot * n_cols, replace=False)
@@ -79,6 +85,10 @@ def ice_plot(ice_data, frac_to_plot=1., x_quantile=False,
         _, ax = plt.subplots()
 
     ax.plot(x, ice_data, **kwargs)
+
+    if plot_pdp:
+        pdp_kwargs = pdp_kwargs or {}
+        ax.plot(x, pdp_data, **pdp_kwargs)
 
     return ax
 
