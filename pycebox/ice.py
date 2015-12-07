@@ -73,7 +73,7 @@ def ice_plot(ice_data, frac_to_plot=1., x_quantile=False,
     if frac_to_plot < 1.:
         n_cols = ice_data.shape[1]
         icols = np.random.choice(n_cols, size=frac_to_plot * n_cols, replace=False)
-        ice_data = ice_data.icol[icols]
+        ice_data = ice_data.iloc[:, icols]
 
     if ax is None:
         _, ax = plt.subplots()
@@ -81,6 +81,13 @@ def ice_plot(ice_data, frac_to_plot=1., x_quantile=False,
     ax.plot(x, ice_data, **kwargs)
 
     return ax
+
+
+def pdp(ice_data):
+    """
+    Calculate a partial dependence plot from an ICE `DataFrame`
+    """
+    return ice_data.mean(axis=1)
 
 
 def to_ice_data(data, column, x_s):
