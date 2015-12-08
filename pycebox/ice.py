@@ -1,5 +1,6 @@
 from __future__ import division
 
+from matplotlib import colors, cm
 from matplotlib import pyplot as plt
 import numpy as np
 import pandas as pd
@@ -42,6 +43,7 @@ def ice(data, column, predict, num_grid_points=None):
 
 def ice_plot(ice_data, frac_to_plot=1., x_quantile=False, plot_pdp=False,
              centered=False, centered_quantile=0.,
+             color_by=None, colormap=None,
              ax=None, pdp_kwargs=None, **kwargs):
     """
     Plot the given ICE data
@@ -57,6 +59,9 @@ def ice_plot(ice_data, frac_to_plot=1., x_quantile=False, plot_pdp=False,
 
     If `centered` is true, each ICE curve is is centered to zero at the
     percentile (closest to) `centered_quantile`.
+
+    If `color_by` is not `None`, color the ICE curves by the given variable
+    in the column index of `ice_data`.
 
     Keyword arguments are passed to plot(...)
     """
@@ -84,7 +89,16 @@ def ice_plot(ice_data, frac_to_plot=1., x_quantile=False, plot_pdp=False,
     if ax is None:
         _, ax = plt.subplots()
 
-    ax.plot(x, ice_data, **kwargs)
+    if color_by is not None:
+        colors_raw = ice_data.columns.get_level_values(color_by).values
+        norm = colors.Normalize(colors_raw.min(), colors_raw.max())
+        m = cm.ScalarMappable(norm=norm, cmap=colormap)
+
+        for color_raw, col in zip(colors_raw, xrange(ice_data.shape[1])):
+            c = m.to_rgba(color_raw)
+            ax.plot(x, ice_data.iloc[:, col], c=c, **kwargs)
+    else:
+        ax.plot(x, ice_data, **kwargs)
 
     if plot_pdp:
         pdp_kwargs = pdp_kwargs or {}
