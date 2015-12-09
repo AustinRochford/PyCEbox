@@ -1,5 +1,7 @@
 from __future__ import division
 
+import six
+
 from matplotlib import colors, cm
 from matplotlib import pyplot as plt
 import numpy as np
@@ -36,14 +38,14 @@ def ice(data, column, predict, num_grid_points=None):
 
     other_columns = list(data.columns)
     other_columns.remove(column)
-    ice_df = ice_data.pivot_table(values='ice_y', index=other_columns, columns=column).T
+    ice_data = ice_data.pivot_table(values='ice_y', index=other_columns, columns=column).T
 
-    return ice_df
+    return ice_data
 
 
 def ice_plot(ice_data, frac_to_plot=1., x_quantile=False, plot_pdp=False,
              centered=False, centered_quantile=0.,
-             color_by=None, colormap=None,
+             color_by=None, cmap=None,
              ax=None, pdp_kwargs=None, **kwargs):
     """
     Plot the given ICE data
@@ -61,7 +63,8 @@ def ice_plot(ice_data, frac_to_plot=1., x_quantile=False, plot_pdp=False,
     percentile (closest to) `centered_quantile`.
 
     If `color_by` is not `None`, color the ICE curves by the given variable
-    in the column index of `ice_data`.
+    in the column index of `ice_data`.  If `cmap` is not `None`, use it to
+    choose colors based on `color_by`.
 
     Keyword arguments are passed to plot(...)
     """
@@ -90,9 +93,16 @@ def ice_plot(ice_data, frac_to_plot=1., x_quantile=False, plot_pdp=False,
         _, ax = plt.subplots()
 
     if color_by is not None:
-        colors_raw = ice_data.columns.get_level_values(color_by).values
+        if isinstance(color_by, six.string_types):
+            colors_raw = ice_data.columns.get_level_values(color_by).values
+        elif hasattr(color_by, '__call__'):
+            col_df = pd.DataFrame(list(ice_data.columns.values), columns=ice_data.columns.names)
+            colors_raw = color_by(col_df)
+        else:
+            raise ValueError('color_by must be a string or function')
+
         norm = colors.Normalize(colors_raw.min(), colors_raw.max())
-        m = cm.ScalarMappable(norm=norm, cmap=colormap)
+        m = cm.ScalarMappable(norm=norm, cmap=cmap)
 
         for color_raw, col in zip(colors_raw, xrange(ice_data.shape[1])):
             c = m.to_rgba(color_raw)
