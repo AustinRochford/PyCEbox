@@ -104,9 +104,9 @@ def ice_plot(ice_data, frac_to_plot=1., x_quantile=False, plot_pdp=False,
         norm = colors.Normalize(colors_raw.min(), colors_raw.max())
         m = cm.ScalarMappable(norm=norm, cmap=cmap)
 
-        for color_raw, col in zip(colors_raw, xrange(ice_data.shape[1])):
+        for color_raw, (_, ice_curve) in zip(colors_raw, ice_data.iteritems()):
             c = m.to_rgba(color_raw)
-            ax.plot(x, ice_data.iloc[:, col], c=c, **kwargs)
+            ax.plot(x, ice_curve, c=c, **kwargs)
     else:
         ax.plot(x, ice_data, **kwargs)
 
