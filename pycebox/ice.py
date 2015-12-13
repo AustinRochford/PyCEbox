@@ -1,5 +1,8 @@
 from __future__ import division
 
+import six
+
+from matplotlib import colors, cm
 from matplotlib import pyplot as plt
 import numpy as np
 import pandas as pd
@@ -35,13 +38,14 @@ def ice(data, column, predict, num_grid_points=None):
 
     other_columns = list(data.columns)
     other_columns.remove(column)
-    ice_df = ice_data.pivot_table(values='ice_y', index=other_columns, columns=column).T
+    ice_data = ice_data.pivot_table(values='ice_y', index=other_columns, columns=column).T
 
-    return ice_df
+    return ice_data
 
 
 def ice_plot(ice_data, frac_to_plot=1., x_quantile=False, plot_pdp=False,
              centered=False, centered_quantile=0.,
+             color_by=None, cmap=None,
              ax=None, pdp_kwargs=None, **kwargs):
     """
     Plot the given ICE data
@@ -58,36 +62,57 @@ def ice_plot(ice_data, frac_to_plot=1., x_quantile=False, plot_pdp=False,
     If `centered` is true, each ICE curve is is centered to zero at the
     percentile (closest to) `centered_quantile`.
 
+    If `color_by` is not `None`, color the ICE curves by the given variable
+    in the column index of `ice_data`.  If `cmap` is not `None`, use it to
+    choose colors based on `color_by`.
+
     Keyword arguments are passed to plot(...)
     """
     if not ice_data.index.is_monotonic_increasing:
         ice_data = ice_data.sort_index()
-
-    if x_quantile:
-        x = get_quantiles(ice_data.index)
-    else:
-        x = ice_data.index
 
     if centered:
         quantiles = get_quantiles(ice_data.index)
         centered_quantile_iloc = np.abs(quantiles - centered_quantile).argmin()
         ice_data = ice_data - ice_data.iloc[centered_quantile_iloc]
 
-    if plot_pdp:
-        pdp_data = pdp(ice_data)
-
     if frac_to_plot < 1.:
         n_cols = ice_data.shape[1]
         icols = np.random.choice(n_cols, size=frac_to_plot * n_cols, replace=False)
-        ice_data = ice_data.iloc[:, icols]
+        plot_ice_data = ice_data.iloc[:, icols]
+    else:
+        plot_ice_data = ice_data
+
+    if x_quantile:
+        x = get_quantiles(ice_data.index)
+    else:
+        x = ice_data.index
+
 
     if ax is None:
         _, ax = plt.subplots()
 
-    ax.plot(x, ice_data, **kwargs)
+    if color_by is not None:
+        if isinstance(color_by, six.string_types):
+            colors_raw = plot_ice_data.columns.get_level_values(color_by).values
+        elif hasattr(color_by, '__call__'):
+            col_df = pd.DataFrame(list(plot_ice_data.columns.values), columns=plot_ice_data.columns.names)
+            colors_raw = color_by(col_df)
+        else:
+            raise ValueError('color_by must be a string or function')
+
+        norm = colors.Normalize(colors_raw.min(), colors_raw.max())
+        m = cm.ScalarMappable(norm=norm, cmap=cmap)
+
+        for color_raw, (_, ice_curve) in zip(colors_raw, plot_ice_data.iteritems()):
+            c = m.to_rgba(color_raw)
+            ax.plot(x, ice_curve, c=c, **kwargs)
+    else:
+        ax.plot(x, plot_ice_data, **kwargs)
 
     if plot_pdp:
         pdp_kwargs = pdp_kwargs or {}
+        pdp_data = pdp(ice_data)
         ax.plot(x, pdp_data, **pdp_kwargs)
 
     return ax
