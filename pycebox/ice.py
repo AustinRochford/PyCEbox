@@ -71,32 +71,32 @@ def ice_plot(ice_data, frac_to_plot=1., x_quantile=False, plot_pdp=False,
     if not ice_data.index.is_monotonic_increasing:
         ice_data = ice_data.sort_index()
 
-    if x_quantile:
-        x = get_quantiles(ice_data.index)
-    else:
-        x = ice_data.index
-
     if centered:
         quantiles = get_quantiles(ice_data.index)
         centered_quantile_iloc = np.abs(quantiles - centered_quantile).argmin()
         ice_data = ice_data - ice_data.iloc[centered_quantile_iloc]
 
-    if plot_pdp:
-        pdp_data = pdp(ice_data)
-
     if frac_to_plot < 1.:
         n_cols = ice_data.shape[1]
         icols = np.random.choice(n_cols, size=frac_to_plot * n_cols, replace=False)
-        ice_data = ice_data.iloc[:, icols]
+        plot_ice_data = ice_data.iloc[:, icols]
+    else:
+        plot_ice_data = ice_data
+
+    if x_quantile:
+        x = get_quantiles(ice_data.index)
+    else:
+        x = ice_data.index
+
 
     if ax is None:
         _, ax = plt.subplots()
 
     if color_by is not None:
         if isinstance(color_by, six.string_types):
-            colors_raw = ice_data.columns.get_level_values(color_by).values
+            colors_raw = plot_ice_data.columns.get_level_values(color_by).values
         elif hasattr(color_by, '__call__'):
-            col_df = pd.DataFrame(list(ice_data.columns.values), columns=ice_data.columns.names)
+            col_df = pd.DataFrame(list(plot_ice_data.columns.values), columns=plot_ice_data.columns.names)
             colors_raw = color_by(col_df)
         else:
             raise ValueError('color_by must be a string or function')
@@ -104,14 +104,15 @@ def ice_plot(ice_data, frac_to_plot=1., x_quantile=False, plot_pdp=False,
         norm = colors.Normalize(colors_raw.min(), colors_raw.max())
         m = cm.ScalarMappable(norm=norm, cmap=cmap)
 
-        for color_raw, (_, ice_curve) in zip(colors_raw, ice_data.iteritems()):
+        for color_raw, (_, ice_curve) in zip(colors_raw, plot_ice_data.iteritems()):
             c = m.to_rgba(color_raw)
             ax.plot(x, ice_curve, c=c, **kwargs)
     else:
-        ax.plot(x, ice_data, **kwargs)
+        ax.plot(x, plot_ice_data, **kwargs)
 
     if plot_pdp:
         pdp_kwargs = pdp_kwargs or {}
+        pdp_data = pdp(ice_data)
         ax.plot(x, pdp_data, **pdp_kwargs)
 
     return ax
