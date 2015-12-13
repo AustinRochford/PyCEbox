@@ -62,9 +62,13 @@ def ice_plot(ice_data, frac_to_plot=1., x_quantile=False, plot_pdp=False,
     If `centered` is true, each ICE curve is is centered to zero at the
     percentile (closest to) `centered_quantile`.
 
-    If `color_by` is not `None`, color the ICE curves by the given variable
-    in the column index of `ice_data`.  If `cmap` is not `None`, use it to
-    choose colors based on `color_by`.
+    If `color_by` is not `None`, use the following procedure to color the ICE
+    curves.
+        * If `color_by` is a string, color the ICE curves by the given variable
+          in the column index of `ice_data`.
+        * If `color_by` is callable, color the ICE curves by its return value
+          when applied to a `DataFrame` created by the columns of `ice_data`.
+    If `cmap` is not `None`, use it to choose colors based on `color_by`.
 
     Keyword arguments are passed to plot(...)
     """
