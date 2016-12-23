@@ -1,5 +1,9 @@
 from hypothesis import given
 from hypothesis import strategies as st
+from hypothesis.extra.numpy import arrays
+
+from itertools import repeat
+from six.moves.builtins import range
 
 import matplotlib as mpl
 import numpy as np
@@ -78,16 +82,10 @@ def test_ice_num_grid_points():
     assert (ice_df == ice_df_expected).all().all()
 
 
-# generate a list of length m  and a list of length m of lists of length n of
-# floats, to turn into a 2d numpy array
-@given(st.tuples(st.integers(min_value=2, max_value=10),
-                 st.integers(min_value=2, max_value=10)).flatmap(lambda (m, n): st.tuples(st.lists(st.floats(),
-                                                                                                   min_size=m,
-                                                                                                   max_size=m),
-                                                                                          st.lists(st.lists(st.floats(),
-                                                                                                   min_size=n,
-                                                                                                   max_size=n),
-                                                                                          min_size=m, max_size=m))))
+@given((st.tuples(st.integers(min_value=2, max_value=10),
+                  st.integers(min_value=2, max_value=10))
+          .flatmap(lambda shape: st.tuples(arrays(np.float64, shape[0]),
+                                           arrays(np.float64, shape)))))
 def test_pdp(args):
     index, l = args
     index.sort()
@@ -97,7 +95,6 @@ def test_pdp(args):
     pdp_expected = pd.Series([pd.Series(row).mean() for row in l], index=index)
 
     assert compare_with_NaN(pdp, pdp_expected).all()
-
 
 
 def test_to_ice_data():
@@ -119,13 +116,14 @@ def test_to_ice_data():
     assert (ice_data == ice_data_expected).all().all()
 
 
-@given(st.lists(st.floats(), min_size=2), st.lists(st.floats(), min_size=1))
-def test_to_ice_data_one_sample(l, x_s):
-    X = np.atleast_2d(l)
+@given((st.tuples(st.integers(min_value=2, max_value=10))
+          .flatmap(lambda size: arrays(np.float64, (1,) + size))),
+       (st.tuples(st.integers(min_value=1, max_value=10))
+          .flatmap(lambda shape: arrays(np.float64, shape))))
+def test_to_ice_data_one_sample(X, x_s):
     n_cols = X.shape[1]
-    columns = ['x{}'.format(i) for i in xrange(n_cols)]
+    columns = ['x{}'.format(i) for i in range(n_cols)]
     data = pd.DataFrame(X, columns=list(columns))
-    x_s = np.array(x_s)
 
     ice_data = ice.to_ice_data(data, 'x1', x_s)
     ice_data_expected_values = np.repeat(X, x_s.size, axis=0)
@@ -136,16 +134,14 @@ def test_to_ice_data_one_sample(l, x_s):
 
 
 # generate a list of length m of lists of length n of floats, to turn into a 2d numpy array
-@given(st.tuples(st.integers(min_value=2, max_value=10),
-                 st.integers(min_value=2, max_value=10)).flatmap(lambda (m, n): st.lists(st.lists(st.floats(),
-                                                                                                  min_size=n,
-                                                                                                  max_size=n),
-                                                                                         min_size=m, max_size=m)),
+@given((st.tuples(st.integers(min_value=2, max_value=10),
+                  st.integers(min_value=2, max_value=10))
+          .flatmap(lambda shape: arrays(np.float64, shape))),
        st.floats())
 def test_to_ice_data_one_test_point(l, x_s):
     X = np.array(l)
     n_cols = X.shape[1]
-    columns = ['x{}'.format(i) for i in xrange(n_cols)]
+    columns = ['x{}'.format(i) for i in range(n_cols)]
     data = pd.DataFrame(X, columns=columns)
     x_s = np.array(x_s)
 

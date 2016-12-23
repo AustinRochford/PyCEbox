@@ -1,4 +1,4 @@
-# PyCEbox
+# ⬛ PyCEbox
 Python Individual Conditional Expectation Plot Toolbox
 
 ![Individual conditional expectation plot](./img/ice_demo.png)
@@ -7,14 +7,13 @@ A Python implementation of individual conditional expecation plots inspired by R
 
 ## Development
 
-For easy development and prototyping using IPython notebooks, there is a Vagrant environment included.  To run an IPython notebook with access to your development version of `pycebox`, follow these steps.
+For easy development and prototyping using IPython notebooks, a Docker environment is included.  To run an IPython notebook with access to your development version of `pycebox`, run `sh ./start_container.sh`.  A Jupyter notebook server with access to your development version of `pycebox` should be available at `http://localhost:8889/tree`.
 
-1. Make sure [VirtualBox](https://www.virtualbox.org/wiki/Downloads) is installed (or change the Vagrant provider in [`Vagrantfile`](./Vagrantfile)).
-2. Provision the virtual machine with `vagrant up`.  This will take some time, as it installs `pycebox`'s dependencies.
-3. Access the virtual machine with `vagrant ssh`.
-4. Run an IPython notebook server with `PYTHONPATH=${PYTHONPATH}:/vagrant ipython notebook --no-browser --ip='*'`.
+To run the `pycebox`'s tests in your development container
 
-You should now be able to access the notebook server at `localhost:8000/tree`.
+1. Access a bash shell on the container with `docker exec -it pycebox bash`.
+2. Change to the `pycebox` directory with `cd ../pycebox`
+3. Run the tests with `pytest test/test.py`
 
 ## License
 
