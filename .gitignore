@@ -71,3 +71,6 @@ pip-selfcheck.json
 
 # vagrant
 .vagrant/
+
+# Jupyter checkpoints
+notebooks/.ipynb_checkpoints/
