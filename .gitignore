@@ -74,3 +74,6 @@ pip-selfcheck.json
 
 # Jupyter checkpoints
 notebooks/.ipynb_checkpoints/
+
+# protoyping
+notebooks/Prototyping.ipynb
