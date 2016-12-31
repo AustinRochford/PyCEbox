@@ -33,11 +33,11 @@ def ice(data, column, predict, num_grid_points=None):
     If num_grid_points is not None, column varies over num_grid_pts values, evenly spaced at its quantiles in data.
     """
     x_s = get_grid_points(data[column], num_grid_points)
-    ice_data = to_ice_data(data, column, x_s)
+    ice_data, orig_column = to_ice_data(data, column, x_s)
     ice_data['ice_y'] = predict(ice_data.values)
+    ice_data['data_{}'.format(column)] = orig_column
 
-    other_columns = list(data.columns)
-    other_columns.remove(column)
+    other_columns = ['data_{}'.format(column)] + [col for col in data.columns if col != column]
     ice_data = ice_data.pivot_table(values='ice_y', index=other_columns, columns=column).T
 
     return ice_data
@@ -134,6 +134,7 @@ def to_ice_data(data, column, x_s):
     Create the DataFrame necessary for ICE calculations
     """
     ice_data = pd.DataFrame(np.repeat(data.values, x_s.size, axis=0), columns=data.columns)
+    data_column = ice_data[column].copy()
     ice_data[column] = np.tile(x_s, data.shape[0])
 
-    return ice_data
+    return ice_data, data_column
