@@ -1,5 +1,4 @@
-from hypothesis import given
-from hypothesis import strategies as st
+from hypothesis import assume, given, strategies as st
 from hypothesis.extra.numpy import arrays
 
 from itertools import repeat
@@ -40,13 +39,33 @@ def test_get_grid_points_num_grid_points_None(l):
     assert compare_with_NaN(x.unique(), ice.get_grid_points(x, None)).all()
 
 
+@given((st.tuples(st.integers(min_value=2, max_value=10))
+          .flatmap(lambda size: arrays(np.float64, size))),
+       (st.tuples(st.integers(min_value=2, max_value=10))
+          .flatmap(lambda size: arrays(np.float64, size))))
+def test_get_point_x_ilocs(grid, data):
+    assume(np.isfinite(grid).all())
+    assume(np.isfinite(data).all())
+
+    grid_index = pd.Float64Index(grid, name='x')
+    data_index = pd.Float64Index(data, name='data_x')
+
+    point_x_ilocs = ice.get_point_x_ilocs(grid_index, data_index)
+
+    diffs = np.subtract.outer(grid, data)
+
+    assert (np.abs(diffs[point_x_ilocs,
+                         np.arange(point_x_ilocs.size)])[np.newaxis] <= np.abs(diffs)).all()
+
+
 def test_ice_one_sample_one_point():
     X = np.array([[0, 1]])
     df = pd.DataFrame(X, columns=['x0', 'x1'])
 
     ice_df = ice.ice(df, 'x1', lambda X: -1)
+    expected_columns = pd.MultiIndex.from_tuples([(1, 0)], names=['data_x1', 'x0'])
     ice_df_expected = pd.DataFrame(np.array([-1]),
-                                   columns=pd.Series(0, name='x0'),
+                                   columns=expected_columns,
                                    index=pd.Series(1, name='x1'))
 
     assert (ice_df == ice_df_expected).all().all()
@@ -57,9 +76,11 @@ def test_ice_two_samples_two_points():
     df = pd.DataFrame(X, columns=['x0', 'x1'])
 
     ice_df = ice.ice(df, 'x0', lambda X: X.prod(axis=1))
+
+    expected_columns = pd.MultiIndex.from_tuples([(0, 1), (1, 0)], names=['data_x0', 'x1'])
     ice_df_expected = pd.DataFrame(np.array([[0, 0],
-                                             [0, 1]]),
-                                   columns=pd.Series([0., 1.], name='x1'),
+                                             [1, 0]]),
+                                   columns=expected_columns,
                                    index=pd.Series([0., 1.], name='x0'))
 
     assert (ice_df == ice_df_expected).all().all()
@@ -72,10 +93,10 @@ def test_ice_num_grid_points():
     ice_df = ice.ice(df, 'x2', lambda X: X.dot(np.array([[1., 2., 3.]]).T),
                      num_grid_points=5)
 
-    expected_columns = pd.MultiIndex.from_tuples([(0, 0), (0, 1), (1, 0)], names=['x0', 'x1'])
-    ice_df_expected = pd.DataFrame(np.array([[0., 2., 1.],
-                                             [1.5, 3.5, 2.5],
-                                             [3., 5., 4.]]),
+    expected_columns = pd.MultiIndex.from_tuples([(0, 0, 1), (0, 1, 0), (1, 0, 0)], names=['data_x2', 'x0', 'x1'])
+    ice_df_expected = pd.DataFrame(np.array([[2., 1., 0.],
+                                             [3.5, 2.5, 1.5],
+                                             [5., 4., 3.]]),
                                    columns=expected_columns,
                                    index=pd.Series([0., 0.5, 1.], name='x2'))
 
@@ -104,7 +125,7 @@ def test_to_ice_data():
     data = pd.DataFrame(X, columns=['x1', 'x2', 'x3'])
     x_s = np.array([10, 11])
 
-    ice_data = ice.to_ice_data(data, 'x3', x_s)
+    ice_data, orig_column = ice.to_ice_data(data, 'x3', x_s)
     ice_data_expected = pd.DataFrame(np.array([[1, 2, 10],
                                                [1, 2, 11],
                                                [4, 5, 10],
@@ -113,7 +134,10 @@ def test_to_ice_data():
                                                [7, 8, 11]]),
                                      columns=['x1', 'x2', 'x3'])
 
+    orig_column_expected = pd.Series([3, 3, 6, 6, 9, 9], name='x3')
+
     assert (ice_data == ice_data_expected).all().all()
+    assert compare_with_NaN(orig_column, orig_column_expected).all()
 
 
 @given((st.tuples(st.integers(min_value=2, max_value=10))
@@ -125,15 +149,18 @@ def test_to_ice_data_one_sample(X, x_s):
     columns = ['x{}'.format(i) for i in range(n_cols)]
     data = pd.DataFrame(X, columns=list(columns))
 
-    ice_data = ice.to_ice_data(data, 'x1', x_s)
+    ice_data, orig_column = ice.to_ice_data(data, 'x1', x_s)
+
     ice_data_expected_values = np.repeat(X, x_s.size, axis=0)
     ice_data_expected_values[:, 1] = x_s
     ice_data_expected = pd.DataFrame(ice_data_expected_values, columns=columns)
 
+    orig_column_expected = np.repeat(data['x1'].values, x_s.size)
+
     assert compare_with_NaN(ice_data, ice_data_expected).all().all()
+    assert compare_with_NaN(orig_column, orig_column_expected).all()
 
 
-# generate a list of length m of lists of length n of floats, to turn into a 2d numpy array
 @given((st.tuples(st.integers(min_value=2, max_value=10),
                   st.integers(min_value=2, max_value=10))
           .flatmap(lambda shape: arrays(np.float64, shape))),
@@ -145,9 +172,13 @@ def test_to_ice_data_one_test_point(l, x_s):
     data = pd.DataFrame(X, columns=columns)
     x_s = np.array(x_s)
 
-    ice_data = ice.to_ice_data(data, 'x0', x_s)
+    ice_data, orig_column = ice.to_ice_data(data, 'x0', x_s)
+
     ice_data_expected_values = X.copy()
     ice_data_expected_values[:, 0] = x_s
     ice_data_expected = pd.DataFrame(ice_data_expected_values, columns=columns)
 
+    orig_column_expected = data['x0']
+
     assert compare_with_NaN(ice_data, ice_data_expected).all().all()
+    assert compare_with_NaN(orig_column, orig_column_expected).all()
