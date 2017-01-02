@@ -1,5 +1,4 @@
-from hypothesis import given
-from hypothesis import strategies as st
+from hypothesis import assume, given, strategies as st
 from hypothesis.extra.numpy import arrays
 
 from itertools import repeat
@@ -38,6 +37,25 @@ def test_get_grid_points_num_grid_points_None(l):
     x = pd.Series(l)
 
     assert compare_with_NaN(x.unique(), ice.get_grid_points(x, None)).all()
+
+
+@given((st.tuples(st.integers(min_value=2, max_value=10))
+          .flatmap(lambda size: arrays(np.float64, size))),
+       (st.tuples(st.integers(min_value=2, max_value=10))
+          .flatmap(lambda size: arrays(np.float64, size))))
+def test_get_point_x_ilocs(grid, data):
+    assume(np.isfinite(grid).all())
+    assume(np.isfinite(data).all())
+
+    grid_index = pd.Float64Index(grid, name='x')
+    data_index = pd.Float64Index(data, name='data_x')
+
+    point_x_ilocs = ice.get_point_x_ilocs(grid_index, data_index)
+
+    diffs = np.subtract.outer(grid, data)
+
+    assert (np.abs(diffs[point_x_ilocs,
+                         np.arange(point_x_ilocs.size)])[np.newaxis] <= np.abs(diffs)).all()
 
 
 def test_ice_one_sample_one_point():
@@ -143,7 +161,6 @@ def test_to_ice_data_one_sample(X, x_s):
     assert compare_with_NaN(orig_column, orig_column_expected).all()
 
 
-# generate a list of length m of lists of length n of floats, to turn into a 2d numpy array
 @given((st.tuples(st.integers(min_value=2, max_value=10),
                   st.integers(min_value=2, max_value=10))
           .flatmap(lambda shape: arrays(np.float64, shape))),

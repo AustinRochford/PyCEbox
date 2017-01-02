@@ -18,6 +18,15 @@ def get_grid_points(x, num_grid_points):
         return x.quantile(np.linspace(0, 1, num_grid_points)).unique()
 
 
+def get_point_x_ilocs(grid_index, data_index):
+    data_level = 'data_{}'.format(grid_index.name)
+
+    return (np.abs(np.subtract
+                      .outer(grid_index,
+                             data_index.get_level_values(data_level)))
+              .argmin(axis=0))
+
+
 def get_quantiles(x):
     return np.greater.outer(x, x).sum(axis=1) / x.size
 
@@ -43,21 +52,26 @@ def ice(data, column, predict, num_grid_points=None):
     return ice_data
 
 
-def ice_plot(ice_data, frac_to_plot=1., x_quantile=False, plot_pdp=False,
+def ice_plot(ice_data, frac_to_plot=1.,
+             plot_points=False, point_kwargs=None,
+             x_quantile=False, plot_pdp=False,
              centered=False, centered_quantile=0.,
              color_by=None, cmap=None,
              ax=None, pdp_kwargs=None, **kwargs):
     """
     Plot the given ICE data
 
-    If frace_to_plot is less than one, randomly samples that fraction of ICE
+    If `frac_to_plot` is less than one, randomly samples that fraction of ICE
     curves to plot
+
+    If `plot_points` is `True`, plot the predicted value for each point on its ICE curve.
+    When this is `True`, passes `point_kwargs` to `scatter(...)`
 
     If `x_quantile` is `True`, the plotted x-coordinates are quantiles of
     `ice_data.index`.
 
     If `plot_pdp` is `True`, plot the partial dependence estimate.  When this
-    is `True`, passes `pdp_kwargs` to plot(...).
+    is `True`, passes `pdp_kwargs` to `plot(...)`.
 
     If `centered` is true, each ICE curve is is centered to zero at the
     percentile (closest to) `centered_quantile`.
@@ -87,11 +101,16 @@ def ice_plot(ice_data, frac_to_plot=1., x_quantile=False, plot_pdp=False,
     else:
         plot_ice_data = ice_data
 
+
     if x_quantile:
         x = get_quantiles(ice_data.index)
     else:
         x = ice_data.index
 
+    if plot_points:
+        point_x_ilocs = get_point_x_ilocs(plot_ice_data.index, plot_ice_data.columns)
+        point_x = x[point_x_ilocs]
+        point_y = plot_ice_data.values[point_x_ilocs, np.arange(point_x_ilocs.size)]
 
     if ax is None:
         _, ax = plt.subplots()
@@ -110,9 +129,12 @@ def ice_plot(ice_data, frac_to_plot=1., x_quantile=False, plot_pdp=False,
 
         for color_raw, (_, ice_curve) in zip(colors_raw, plot_ice_data.iteritems()):
             c = m.to_rgba(color_raw)
-            ax.plot(x, ice_curve, c=c, **kwargs)
+            ax.plot(x, ice_curve, c=c, zorder=0, **kwargs)
     else:
-        ax.plot(x, plot_ice_data, **kwargs)
+        ax.plot(x, plot_ice_data, zorder=0, **kwargs)
+
+    if plot_points:
+        ax.scatter(point_x, point_y, zorder=10, **(point_kwargs or {}))
 
     if plot_pdp:
         pdp_kwargs = pdp_kwargs or {}
