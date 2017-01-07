@@ -8,7 +8,7 @@ import numpy as np
 import pandas as pd
 
 
-def get_grid_points(x, num_grid_points):
+def _get_grid_points(x, num_grid_points):
     if num_grid_points is None:
         return x.unique()
     else:
@@ -18,7 +18,7 @@ def get_grid_points(x, num_grid_points):
         return x.quantile(np.linspace(0, 1, num_grid_points)).unique()
 
 
-def get_point_x_ilocs(grid_index, data_index):
+def _get_point_x_ilocs(grid_index, data_index):
     data_level = 'data_{}'.format(grid_index.name)
 
     return (np.abs(np.subtract
@@ -27,7 +27,7 @@ def get_point_x_ilocs(grid_index, data_index):
               .argmin(axis=0))
 
 
-def get_quantiles(x):
+def _get_quantiles(x):
     return np.greater.outer(x, x).sum(axis=1) / x.size
 
 
@@ -41,8 +41,8 @@ def ice(data, column, predict, num_grid_points=None):
     If num_grid_points is None, column varies over its unique values in data.
     If num_grid_points is not None, column varies over num_grid_pts values, evenly spaced at its quantiles in data.
     """
-    x_s = get_grid_points(data[column], num_grid_points)
-    ice_data, orig_column = to_ice_data(data, column, x_s)
+    x_s = _get_grid_points(data[column], num_grid_points)
+    ice_data, orig_column = _to_ice_data(data, column, x_s)
     ice_data['ice_y'] = predict(ice_data.values)
     ice_data['data_{}'.format(column)] = orig_column
 
@@ -90,7 +90,7 @@ def ice_plot(ice_data, frac_to_plot=1.,
         ice_data = ice_data.sort_index()
 
     if centered:
-        quantiles = get_quantiles(ice_data.index)
+        quantiles = __get_quantiles(ice_data.index)
         centered_quantile_iloc = np.abs(quantiles - centered_quantile).argmin()
         ice_data = ice_data - ice_data.iloc[centered_quantile_iloc]
 
@@ -103,12 +103,12 @@ def ice_plot(ice_data, frac_to_plot=1.,
 
 
     if x_quantile:
-        x = get_quantiles(ice_data.index)
+        x = __get_quantiles(ice_data.index)
     else:
         x = ice_data.index
 
     if plot_points:
-        point_x_ilocs = get_point_x_ilocs(plot_ice_data.index, plot_ice_data.columns)
+        point_x_ilocs = _get_point_x_ilocs(plot_ice_data.index, plot_ice_data.columns)
         point_x = x[point_x_ilocs]
         point_y = plot_ice_data.values[point_x_ilocs, np.arange(point_x_ilocs.size)]
 
@@ -151,7 +151,7 @@ def pdp(ice_data):
     return ice_data.mean(axis=1)
 
 
-def to_ice_data(data, column, x_s):
+def _to_ice_data(data, column, x_s):
     """
     Create the DataFrame necessary for ICE calculations
     """
