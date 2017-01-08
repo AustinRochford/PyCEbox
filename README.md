@@ -17,6 +17,10 @@ To run the `pycebox`'s tests in your development container
 2. Change to the `pycebox` directory with `cd ../pycebox`
 3. Run the tests with `pytest test/test.py`
 
+## Documentation
+
+For details of `pycebox`'s API, consult the [documentation](http://austinrochford.github.io/PyCEbox/docs/).
+
 ## License
 
 This library is distributed under the [MIT License](https://raw.githubusercontent.com/AustinRochford/PyCEbox/master/LICENSE).
