@@ -1,7 +1,6 @@
 from hypothesis import assume, given, strategies as st
 from hypothesis.extra.numpy import arrays
 
-from itertools import repeat
 from six.moves.builtins import range
 
 import matplotlib as mpl
