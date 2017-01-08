@@ -1,0 +1,288 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>pycebox.ice &#8212; PyCEbox 0.0.1 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '0.0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="top" title="PyCEbox 0.0.1 documentation" href="../../index.html" />
+    <link rel="up" title="Module code" href="../index.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for pycebox.ice</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">division</span>
+
+<span class="kn">import</span> <span class="nn">six</span>
+
+<span class="kn">from</span> <span class="nn">matplotlib</span> <span class="k">import</span> <span class="n">colors</span><span class="p">,</span> <span class="n">cm</span>
+<span class="kn">from</span> <span class="nn">matplotlib</span> <span class="k">import</span> <span class="n">pyplot</span> <span class="k">as</span> <span class="n">plt</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+
+
+<span class="k">def</span> <span class="nf">_get_grid_points</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">num_grid_points</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">num_grid_points</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">x</span><span class="o">.</span><span class="n">unique</span><span class="p">()</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c1"># unique is necessary, because if num_grid_points is too much larger</span>
+        <span class="c1"># than x.shape[0], there will be duplicate quantiles (even with</span>
+        <span class="c1"># interpolation)</span>
+        <span class="k">return</span> <span class="n">x</span><span class="o">.</span><span class="n">quantile</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">num_grid_points</span><span class="p">))</span><span class="o">.</span><span class="n">unique</span><span class="p">()</span>
+
+
+<span class="k">def</span> <span class="nf">_get_point_x_ilocs</span><span class="p">(</span><span class="n">grid_index</span><span class="p">,</span> <span class="n">data_index</span><span class="p">):</span>
+    <span class="n">data_level</span> <span class="o">=</span> <span class="s1">&#39;data_</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">grid_index</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">subtract</span>
+                      <span class="o">.</span><span class="n">outer</span><span class="p">(</span><span class="n">grid_index</span><span class="p">,</span>
+                             <span class="n">data_index</span><span class="o">.</span><span class="n">get_level_values</span><span class="p">(</span><span class="n">data_level</span><span class="p">)))</span>
+              <span class="o">.</span><span class="n">argmin</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">))</span>
+
+
+<span class="k">def</span> <span class="nf">_get_quantiles</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">greater</span><span class="o">.</span><span class="n">outer</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="n">x</span><span class="o">.</span><span class="n">size</span>
+
+
+<div class="viewcode-block" id="ice"><a class="viewcode-back" href="../../index.html#pycebox.ice.ice">[docs]</a><span class="k">def</span> <span class="nf">ice</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">column</span><span class="p">,</span> <span class="n">predict</span><span class="p">,</span> <span class="n">num_grid_points</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Generate individual conditional expectation (ICE) curves for a model.</span>
+
+<span class="sd">    :param data: the sample data from which to generate ICE curves</span>
+<span class="sd">    :type data: ``pandas`` ``DataFrame``</span>
+
+<span class="sd">    :param column: the name of the column in ``data`` that will be varied to</span>
+<span class="sd">        generate ICE curves</span>
+<span class="sd">    :type column: ``str``</span>
+
+<span class="sd">    :param predict: the function that generates predictions from the model.</span>
+<span class="sd">        Must accept a ``DataFrame`` with the same columns as ``data``.</span>
+<span class="sd">    :type predict: callable</span>
+
+<span class="sd">    :param num_grid_points: the number of grid points to use for the independent</span>
+<span class="sd">        variable of the ICE curves. The independent variable values for the</span>
+<span class="sd">        curves will be quantiles of the data.</span>
+
+<span class="sd">        If ``None``, the values of the independent variable will be the unique</span>
+<span class="sd">        values of ``data[column]``.</span>
+<span class="sd">    :type num_grid_points: ``None`` or ``int``</span>
+
+<span class="sd">    :return: A ``DataFrame`` whose columns are ICE curves.  The row index is the</span>
+<span class="sd">        independent variable, and the column index is the original data point</span>
+<span class="sd">        corresponding to that ICE curve.</span>
+<span class="sd">    :rtype: ``pandas`` ``DataFrame``</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">x_s</span> <span class="o">=</span> <span class="n">_get_grid_points</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="n">column</span><span class="p">],</span> <span class="n">num_grid_points</span><span class="p">)</span>
+    <span class="n">ice_data</span><span class="p">,</span> <span class="n">orig_column</span> <span class="o">=</span> <span class="n">_to_ice_data</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">column</span><span class="p">,</span> <span class="n">x_s</span><span class="p">)</span>
+    <span class="n">ice_data</span><span class="p">[</span><span class="s1">&#39;ice_y&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">predict</span><span class="p">(</span><span class="n">ice_data</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
+    <span class="n">ice_data</span><span class="p">[</span><span class="s1">&#39;data_</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">column</span><span class="p">)]</span> <span class="o">=</span> <span class="n">orig_column</span>
+
+    <span class="n">other_columns</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;data_</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">column</span><span class="p">)]</span> <span class="o">+</span> <span class="p">[</span><span class="n">col</span> <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">columns</span> <span class="k">if</span> <span class="n">col</span> <span class="o">!=</span> <span class="n">column</span><span class="p">]</span>
+    <span class="n">ice_data</span> <span class="o">=</span> <span class="n">ice_data</span><span class="o">.</span><span class="n">pivot_table</span><span class="p">(</span><span class="n">values</span><span class="o">=</span><span class="s1">&#39;ice_y&#39;</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="n">other_columns</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="n">column</span><span class="p">)</span><span class="o">.</span><span class="n">T</span>
+
+    <span class="k">return</span> <span class="n">ice_data</span></div>
+
+
+<div class="viewcode-block" id="ice_plot"><a class="viewcode-back" href="../../index.html#pycebox.ice.ice_plot">[docs]</a><span class="k">def</span> <span class="nf">ice_plot</span><span class="p">(</span><span class="n">ice_data</span><span class="p">,</span> <span class="n">frac_to_plot</span><span class="o">=</span><span class="mf">1.</span><span class="p">,</span>
+             <span class="n">plot_points</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">point_kwargs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+             <span class="n">x_quantile</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">plot_pdp</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+             <span class="n">centered</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">centered_quantile</span><span class="o">=</span><span class="mf">0.</span><span class="p">,</span>
+             <span class="n">color_by</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+             <span class="n">ax</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">pdp_kwargs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Plot the ICE curves</span>
+
+<span class="sd">    :param ice_data: the ICE data generated by :func:`pycebox.ice.ice`</span>
+<span class="sd">    :type ice_data: ``pandas`` ``DataFrame``</span>
+
+<span class="sd">    :param frac_to_plot: the fraction of ICE curves to plot.  If less than one,</span>
+<span class="sd">        randomly samples columns of ``ice_data`` to plot.</span>
+<span class="sd">    :type frac_to_plot: ``float``</span>
+
+<span class="sd">    :param plot_points: whether or not to plot the original data points on the</span>
+<span class="sd">        ICE curves.  In this case, ``point_kwargs`` is passed as keyword</span>
+<span class="sd">        arguments to plot.</span>
+<span class="sd">    :type plot_points: ``bool``</span>
+
+<span class="sd">    :param x_quantile: if ``True``, the plotted x-coordinates are the quantiles of</span>
+<span class="sd">        ``ice_data.index``</span>
+<span class="sd">    :type x_quantile: ``bool``</span>
+
+<span class="sd">    :param plot_pdp: if ``True``, plot the partial depdendence plot.  In this</span>
+<span class="sd">        case, ``pdp_kwargs`` is passed as keyword arguments to ``plot``.</span>
+
+<span class="sd">    :param centered: if ``True``, each ICE curve is centered to zero at the</span>
+<span class="sd">        percentile closest to ``centered_quantile``.</span>
+<span class="sd">    :type centered: ``bool``</span>
+
+<span class="sd">    :param color_by:  If a string, color the ICE curve by that level of the</span>
+<span class="sd">        column index.</span>
+
+<span class="sd">        If callable, color the ICE curve by its return value when applied to a</span>
+<span class="sd">        ``DataFrame`` of the column index of ``ice_data``</span>
+<span class="sd">    :type color_by: ``None``, ``str``, or callable</span>
+
+<span class="sd">    :param cmap:</span>
+<span class="sd">    :type cmap: ``matplotlib`` ``Colormap``</span>
+
+<span class="sd">    :param ax: the ``Axes`` on which to plot the ICE curves</span>
+<span class="sd">    :type ax: ``None`` or ``matplotlib`` ``Axes``</span>
+
+<span class="sd">    Other keyword arguments are passed to ``plot``</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">ice_data</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">is_monotonic_increasing</span><span class="p">:</span>
+        <span class="n">ice_data</span> <span class="o">=</span> <span class="n">ice_data</span><span class="o">.</span><span class="n">sort_index</span><span class="p">()</span>
+
+    <span class="k">if</span> <span class="n">centered</span><span class="p">:</span>
+        <span class="n">quantiles</span> <span class="o">=</span> <span class="n">__get_quantiles</span><span class="p">(</span><span class="n">ice_data</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
+        <span class="n">centered_quantile_iloc</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">quantiles</span> <span class="o">-</span> <span class="n">centered_quantile</span><span class="p">)</span><span class="o">.</span><span class="n">argmin</span><span class="p">()</span>
+        <span class="n">ice_data</span> <span class="o">=</span> <span class="n">ice_data</span> <span class="o">-</span> <span class="n">ice_data</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">centered_quantile_iloc</span><span class="p">]</span>
+
+    <span class="k">if</span> <span class="n">frac_to_plot</span> <span class="o">&lt;</span> <span class="mf">1.</span><span class="p">:</span>
+        <span class="n">n_cols</span> <span class="o">=</span> <span class="n">ice_data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">icols</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">n_cols</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="n">frac_to_plot</span> <span class="o">*</span> <span class="n">n_cols</span><span class="p">,</span> <span class="n">replace</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="n">plot_ice_data</span> <span class="o">=</span> <span class="n">ice_data</span><span class="o">.</span><span class="n">iloc</span><span class="p">[:,</span> <span class="n">icols</span><span class="p">]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">plot_ice_data</span> <span class="o">=</span> <span class="n">ice_data</span>
+
+
+    <span class="k">if</span> <span class="n">x_quantile</span><span class="p">:</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">__get_quantiles</span><span class="p">(</span><span class="n">ice_data</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">ice_data</span><span class="o">.</span><span class="n">index</span>
+
+    <span class="k">if</span> <span class="n">plot_points</span><span class="p">:</span>
+        <span class="n">point_x_ilocs</span> <span class="o">=</span> <span class="n">_get_point_x_ilocs</span><span class="p">(</span><span class="n">plot_ice_data</span><span class="o">.</span><span class="n">index</span><span class="p">,</span> <span class="n">plot_ice_data</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span>
+        <span class="n">point_x</span> <span class="o">=</span> <span class="n">x</span><span class="p">[</span><span class="n">point_x_ilocs</span><span class="p">]</span>
+        <span class="n">point_y</span> <span class="o">=</span> <span class="n">plot_ice_data</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="n">point_x_ilocs</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">point_x_ilocs</span><span class="o">.</span><span class="n">size</span><span class="p">)]</span>
+
+    <span class="k">if</span> <span class="n">ax</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">_</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">()</span>
+
+    <span class="k">if</span> <span class="n">color_by</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">color_by</span><span class="p">,</span> <span class="n">six</span><span class="o">.</span><span class="n">string_types</span><span class="p">):</span>
+            <span class="n">colors_raw</span> <span class="o">=</span> <span class="n">plot_ice_data</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">get_level_values</span><span class="p">(</span><span class="n">color_by</span><span class="p">)</span><span class="o">.</span><span class="n">values</span>
+        <span class="k">elif</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">color_by</span><span class="p">,</span> <span class="s1">&#39;__call__&#39;</span><span class="p">):</span>
+            <span class="n">col_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">plot_ice_data</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">values</span><span class="p">),</span> <span class="n">columns</span><span class="o">=</span><span class="n">plot_ice_data</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">names</span><span class="p">)</span>
+            <span class="n">colors_raw</span> <span class="o">=</span> <span class="n">color_by</span><span class="p">(</span><span class="n">col_df</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;color_by must be a string or function&#39;</span><span class="p">)</span>
+
+        <span class="n">norm</span> <span class="o">=</span> <span class="n">colors</span><span class="o">.</span><span class="n">Normalize</span><span class="p">(</span><span class="n">colors_raw</span><span class="o">.</span><span class="n">min</span><span class="p">(),</span> <span class="n">colors_raw</span><span class="o">.</span><span class="n">max</span><span class="p">())</span>
+        <span class="n">m</span> <span class="o">=</span> <span class="n">cm</span><span class="o">.</span><span class="n">ScalarMappable</span><span class="p">(</span><span class="n">norm</span><span class="o">=</span><span class="n">norm</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="n">cmap</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">color_raw</span><span class="p">,</span> <span class="p">(</span><span class="n">_</span><span class="p">,</span> <span class="n">ice_curve</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">colors_raw</span><span class="p">,</span> <span class="n">plot_ice_data</span><span class="o">.</span><span class="n">iteritems</span><span class="p">()):</span>
+            <span class="n">c</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">to_rgba</span><span class="p">(</span><span class="n">color_raw</span><span class="p">)</span>
+            <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">ice_curve</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="n">c</span><span class="p">,</span> <span class="n">zorder</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">plot_ice_data</span><span class="p">,</span> <span class="n">zorder</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">plot_points</span><span class="p">:</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">point_x</span><span class="p">,</span> <span class="n">point_y</span><span class="p">,</span> <span class="n">zorder</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="o">**</span><span class="p">(</span><span class="n">point_kwargs</span> <span class="ow">or</span> <span class="p">{}))</span>
+
+    <span class="k">if</span> <span class="n">plot_pdp</span><span class="p">:</span>
+        <span class="n">pdp_kwargs</span> <span class="o">=</span> <span class="n">pdp_kwargs</span> <span class="ow">or</span> <span class="p">{}</span>
+        <span class="n">pdp_data</span> <span class="o">=</span> <span class="n">pdp</span><span class="p">(</span><span class="n">ice_data</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">pdp_data</span><span class="p">,</span> <span class="o">**</span><span class="n">pdp_kwargs</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">ax</span></div>
+
+
+<div class="viewcode-block" id="pdp"><a class="viewcode-back" href="../../index.html#pycebox.ice.pdp">[docs]</a><span class="k">def</span> <span class="nf">pdp</span><span class="p">(</span><span class="n">ice_data</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Calculate a partial dependence plot from ICE data</span>
+
+<span class="sd">    :param ice_data: the ICE data generated by :func:`pycebox.ice.ice`</span>
+<span class="sd">    :type ice_data: ``pandas`` ``DataFrame``</span>
+
+<span class="sd">    :return: the partial dependence plot curve</span>
+<span class="sd">    :rtype: ``pandas`` ``Series``</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">ice_data</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span></div>
+
+
+<span class="k">def</span> <span class="nf">_to_ice_data</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">column</span><span class="p">,</span> <span class="n">x_s</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Create the DataFrame necessary for ICE calculations</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">ice_data</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="n">x_s</span><span class="o">.</span><span class="n">size</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">),</span> <span class="n">columns</span><span class="o">=</span><span class="n">data</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span>
+    <span class="n">data_column</span> <span class="o">=</span> <span class="n">ice_data</span><span class="p">[</span><span class="n">column</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="n">ice_data</span><span class="p">[</span><span class="n">column</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">tile</span><span class="p">(</span><span class="n">x_s</span><span class="p">,</span> <span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+    <span class="k">return</span> <span class="n">ice_data</span><span class="p">,</span> <span class="n">data_column</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, Austin Rochford.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.8</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

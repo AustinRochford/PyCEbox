@@ -1,0 +1,212 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Welcome to PyCEbox’s documentation! &#8212; PyCEbox 0.0.1 documentation</title>
+    
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="top" title="PyCEbox 0.0.1 documentation" href="#" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="welcome-to-pycebox-s-documentation">
+<h1>Welcome to PyCEbox&#8217;s documentation!<a class="headerlink" href="#welcome-to-pycebox-s-documentation" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="introduction">
+<h2>Introduction<a class="headerlink" href="#introduction" title="Permalink to this headline">¶</a></h2>
+<p>For a walkthrough of <code class="docutils literal"><span class="pre">pycebox</span></code>&#8216;s functionality, see the <a class="reference external" href="https://github.com/AustinRochford/PyCEbox/blob/master/notebooks/PyCEBox%20Tutorial.ipynb">Tutorial</a>.</p>
+</div>
+<div class="section" id="pycebox-api">
+<h2>PyCEbox API<a class="headerlink" href="#pycebox-api" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="pycebox.ice.ice">
+<code class="descclassname">pycebox.ice.</code><code class="descname">ice</code><span class="sig-paren">(</span><em>data</em>, <em>column</em>, <em>predict</em>, <em>num_grid_points=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pycebox/ice.html#ice"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pycebox.ice.ice" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate individual conditional expectation (ICE) curves for a model.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>data</strong> (<code class="docutils literal"><span class="pre">pandas</span></code> <code class="docutils literal"><span class="pre">DataFrame</span></code>) &#8211; the sample data from which to generate ICE curves</li>
+<li><strong>column</strong> (<code class="docutils literal"><span class="pre">str</span></code>) &#8211; the name of the column in <code class="docutils literal"><span class="pre">data</span></code> that will be varied to
+generate ICE curves</li>
+<li><strong>predict</strong> (<em>callable</em>) &#8211; the function that generates predictions from the model.
+Must accept a <code class="docutils literal"><span class="pre">DataFrame</span></code> with the same columns as <code class="docutils literal"><span class="pre">data</span></code>.</li>
+<li><strong>num_grid_points</strong> (<code class="docutils literal"><span class="pre">None</span></code> or <code class="docutils literal"><span class="pre">int</span></code>) &#8211; <p>the number of grid points to use for the independent
+variable of the ICE curves. The independent variable values for the
+curves will be quantiles of the data.</p>
+<p>If <code class="docutils literal"><span class="pre">None</span></code>, the values of the independent variable will be the unique
+values of <code class="docutils literal"><span class="pre">data[column]</span></code>.</p>
+</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">A <code class="docutils literal"><span class="pre">DataFrame</span></code> whose columns are ICE curves.  The row index is the
+independent variable, and the column index is the original data point
+corresponding to that ICE curve.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><code class="docutils literal"><span class="pre">pandas</span></code> <code class="docutils literal"><span class="pre">DataFrame</span></code></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="pycebox.ice.ice_plot">
+<code class="descclassname">pycebox.ice.</code><code class="descname">ice_plot</code><span class="sig-paren">(</span><em>ice_data</em>, <em>frac_to_plot=1.0</em>, <em>plot_points=False</em>, <em>point_kwargs=None</em>, <em>x_quantile=False</em>, <em>plot_pdp=False</em>, <em>centered=False</em>, <em>centered_quantile=0.0</em>, <em>color_by=None</em>, <em>cmap=None</em>, <em>ax=None</em>, <em>pdp_kwargs=None</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pycebox/ice.html#ice_plot"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pycebox.ice.ice_plot" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plot the ICE curves</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>ice_data</strong> (<code class="docutils literal"><span class="pre">pandas</span></code> <code class="docutils literal"><span class="pre">DataFrame</span></code>) &#8211; the ICE data generated by <a class="reference internal" href="#pycebox.ice.ice" title="pycebox.ice.ice"><code class="xref py py-func docutils literal"><span class="pre">pycebox.ice.ice()</span></code></a></li>
+<li><strong>frac_to_plot</strong> (<code class="docutils literal"><span class="pre">float</span></code>) &#8211; the fraction of ICE curves to plot.  If less than one,
+randomly samples columns of <code class="docutils literal"><span class="pre">ice_data</span></code> to plot.</li>
+<li><strong>plot_points</strong> (<code class="docutils literal"><span class="pre">bool</span></code>) &#8211; whether or not to plot the original data points on the
+ICE curves.  In this case, <code class="docutils literal"><span class="pre">point_kwargs</span></code> is passed as keyword
+arguments to plot.</li>
+<li><strong>x_quantile</strong> (<code class="docutils literal"><span class="pre">bool</span></code>) &#8211; if <code class="docutils literal"><span class="pre">True</span></code>, the plotted x-coordinates are the quantiles of
+<code class="docutils literal"><span class="pre">ice_data.index</span></code></li>
+<li><strong>plot_pdp</strong> &#8211; if <code class="docutils literal"><span class="pre">True</span></code>, plot the partial depdendence plot.  In this
+case, <code class="docutils literal"><span class="pre">pdp_kwargs</span></code> is passed as keyword arguments to <code class="docutils literal"><span class="pre">plot</span></code>.</li>
+<li><strong>centered</strong> (<code class="docutils literal"><span class="pre">bool</span></code>) &#8211; if <code class="docutils literal"><span class="pre">True</span></code>, each ICE curve is centered to zero at the
+percentile closest to <code class="docutils literal"><span class="pre">centered_quantile</span></code>.</li>
+<li><strong>color_by</strong> (<code class="docutils literal"><span class="pre">None</span></code>, <code class="docutils literal"><span class="pre">str</span></code>, or callable) &#8211; <p>If a string, color the ICE curve by that level of the
+column index.</p>
+<p>If callable, color the ICE curve by its return value when applied to a
+<code class="docutils literal"><span class="pre">DataFrame</span></code> of the column index of <code class="docutils literal"><span class="pre">ice_data</span></code></p>
+</li>
+<li><strong>cmap</strong> (<code class="docutils literal"><span class="pre">matplotlib</span></code> <code class="docutils literal"><span class="pre">Colormap</span></code>) &#8211; </li>
+<li><strong>ax</strong> (<code class="docutils literal"><span class="pre">None</span></code> or <code class="docutils literal"><span class="pre">matplotlib</span></code> <code class="docutils literal"><span class="pre">Axes</span></code>) &#8211; the <code class="docutils literal"><span class="pre">Axes</span></code> on which to plot the ICE curves</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<p>Other keyword arguments are passed to <code class="docutils literal"><span class="pre">plot</span></code></p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pycebox.ice.pdp">
+<code class="descclassname">pycebox.ice.</code><code class="descname">pdp</code><span class="sig-paren">(</span><em>ice_data</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pycebox/ice.html#pdp"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pycebox.ice.pdp" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate a partial dependence plot from ICE data</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>ice_data</strong> (<code class="docutils literal"><span class="pre">pandas</span></code> <code class="docutils literal"><span class="pre">DataFrame</span></code>) &#8211; the ICE data generated by <a class="reference internal" href="#pycebox.ice.ice" title="pycebox.ice.ice"><code class="xref py py-func docutils literal"><span class="pre">pycebox.ice.ice()</span></code></a></td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">the partial dependence plot curve</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><code class="docutils literal"><span class="pre">pandas</span></code> <code class="docutils literal"><span class="pre">Series</span></code></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+</div>
+<div class="section" id="indices-and-tables">
+<h1>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this headline">¶</a></h1>
+<ul class="simple">
+<li><a class="reference internal" href="genindex.html"><span class="std std-ref">Index</span></a></li>
+<li><a class="reference internal" href="py-modindex.html"><span class="std std-ref">Module Index</span></a></li>
+<li><a class="reference internal" href="search.html"><span class="std std-ref">Search Page</span></a></li>
+</ul>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="#">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Welcome to PyCEbox&#8217;s documentation!</a><ul>
+<li><a class="reference internal" href="#introduction">Introduction</a></li>
+<li><a class="reference internal" href="#pycebox-api">PyCEbox API</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#indices-and-tables">Indices and tables</a></li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="#">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/index.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, Austin Rochford.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.8</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
+      
+      |
+      <a href="_sources/index.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
