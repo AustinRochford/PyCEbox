@@ -121,7 +121,7 @@ def ice_plot(ice_data, frac_to_plot=1.,
         ice_data = ice_data.sort_index()
 
     if centered:
-        quantiles = __get_quantiles(ice_data.index)
+        quantiles = _get_quantiles(ice_data.index)
         centered_quantile_iloc = np.abs(quantiles - centered_quantile).argmin()
         ice_data = ice_data - ice_data.iloc[centered_quantile_iloc]
 
@@ -134,7 +134,7 @@ def ice_plot(ice_data, frac_to_plot=1.,
 
 
     if x_quantile:
-        x = __get_quantiles(ice_data.index)
+        x = _get_quantiles(ice_data.index)
     else:
         x = ice_data.index
 
