@@ -9,4 +9,5 @@ docker run -d \
     -p $PORT:8888 \
     -v $SRC_DIR:/home/jovyan/pycebox/ \
     -v $NOTEBOOK_DIR:/home/jovyan/work/ \
-    --name pycebox pycebox
+    --name pycebox pycebox \
+    start-notebook.sh --NotebookApp.token=''
